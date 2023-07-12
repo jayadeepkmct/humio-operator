@@ -196,10 +196,11 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&controllers.HumioViewTokenReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:      mgr.GetClient(),
+		HumioClient: humio.NewClient(log, &humioapi.Config{}, userAgent),
+		BaseLogger:  log,
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "HumioViewToken")
+		ctrl.Log.Error(err, "unable to create controller", "controller", "HumioViewToken")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

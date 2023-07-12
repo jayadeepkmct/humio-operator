@@ -9,4 +9,35 @@ metadata:
     app.kubernetes.io/created-by: humio-operator
   name: humioviewtoken-sample
 spec:
-  # TODO(user): Add fields here
+  externalClusterName: example-humioexternalcluster
+  name: example-view-token
+  viewName: humio-view
+  tokenSecretName: example-view-token
+  permissions:
+    changeUserAccess: true
+    changeTriggersAndActions: true
+    changeDashboards: true
+    changeDashboardReadonlyToken: true
+    changeFiles: true
+    changeInteractions: true
+    changeParsers: true
+    changeSavedQueries: true
+    connectView: true
+    changeDataDeletionPermissions: true
+    changeRetention: true
+    changeDefaultSearchSettings: true
+    changeS3ArchivingSettings: true
+    deleteDataSources: true
+    deleteRepositoryOrView: true
+    deleteEvents: true
+    readAccess: true
+    changeIngestTokens: true
+    changePackages: true
+    changeViewOrRepositoryDescription: true
+    changeConnections: true
+    eventForwarding: true
+    queryDashboard: true
+    changeViewOrRepositoryPermissions: true
+    changeFdrFeeds: true
+    organizationOwnedQueries: true
+    readExternalFunctions: true
