@@ -20,6 +20,17 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	// HumioViewTokenStateUnknown is the Unknown state of the ingest token
+	HumioViewTokenStateUnknown = "Unknown"
+	// HumioViewTokenStateExists is the Exists state of the ingest token
+	HumioViewTokenStateExists = "Exists"
+	// HumioViewTokenStateNotFound is the NotFound state of the ingest token
+	HumioViewTokenStateNotFound = "NotFound"
+	// HumioViewTokenStateConfigError is the state of the ingest token when user-provided specification results in configuration error, such as non-existent humio cluster
+	HumioViewTokenStateConfigError = "ConfigError"
+)
+
 type ViewTokenPermissions struct {
 	ChangeUserAccess                  bool `json:"changeUserAccess,omitempty"`
 	ChangeTriggersAndActions          bool `json:"changeTriggersAndActions,omitempty"`

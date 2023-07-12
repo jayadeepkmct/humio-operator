@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -70,9 +71,50 @@ func (r *HumioViewTokenReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return reconcile.Result{}, err
 	}
 
-	r.Log.Info("got humioviewtoken", "cr", hvt)
+	cluster, err := helpers.NewCluster(ctx, r, hvt.Spec.ManagedClusterName, hvt.Spec.ExternalClusterName, hvt.Namespace, helpers.UseCertManager(), true)
+	if err != nil || cluster == nil || cluster.Config() == nil {
+		r.Log.Error(err, "unable to obtain humio client config")
+		err = r.setState(ctx, humiov1alpha1.HumioViewTokenStateConfigError, hvt)
+		if err != nil {
+			return reconcile.Result{}, r.logErrorAndReturn(err, "unable to set cluster state")
+		}
+		return reconcile.Result{RequeueAfter: time.Second * 15}, nil
+	}
+
+	// Get current view token
+	r.Log.Info("get current view token")
+	curToken, err := r.HumioClient.GetViewToken(cluster.Config(), req, hvt)
+	if err != nil {
+		return reconcile.Result{}, r.logErrorAndReturn(err, "could not check if view token exists")
+	}
+
+	emptyToken := humio.ViewToken{}
+	if emptyToken == *curToken {
+		r.Log.Info("view token doesn't exist. Now adding view token")
+		// create token
+		_, err := r.HumioClient.AddViewToken(cluster.Config(), req, hvt)
+		if err != nil {
+			return reconcile.Result{}, r.logErrorAndReturn(err, "could not create view token")
+		}
+		r.Log.Info("created view token")
+		return reconcile.Result{Requeue: true}, nil
+	}
 
 	return reconcile.Result{RequeueAfter: time.Second * 15}, nil
+}
+
+func (r *HumioViewTokenReconciler) setState(ctx context.Context, state string, hvt *humiov1alpha1.HumioViewToken) error {
+	if hvt.Status.State == state {
+		return nil
+	}
+	r.Log.Info(fmt.Sprintf("setting view token state to %s", state))
+	hvt.Status.State = state
+	return r.Status().Update(ctx, hvt)
+}
+
+func (r *HumioViewTokenReconciler) logErrorAndReturn(err error, msg string) error {
+	r.Log.Error(err, msg)
+	return fmt.Errorf("%s: %w", msg, err)
 }
 
 // SetupWithManager sets up the controller with the Manager.

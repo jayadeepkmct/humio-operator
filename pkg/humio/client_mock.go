@@ -163,6 +163,22 @@ func (h *MockClientConfig) DeleteIngestToken(config *humioapi.Config, req reconc
 	return nil
 }
 
+func (h *MockClientConfig) AddViewToken(config *humioapi.Config, req reconcile.Request, hvt *humiov1alpha1.HumioViewToken) (*ViewToken, error) {
+	return &ViewToken{}, nil
+}
+
+func (h *MockClientConfig) GetViewToken(config *humioapi.Config, req reconcile.Request, hvt *humiov1alpha1.HumioViewToken) (*ViewToken, error) {
+	return &ViewToken{}, nil
+}
+
+func (h *MockClientConfig) UpdateViewToken(config *humioapi.Config, req reconcile.Request, hvt *humiov1alpha1.HumioViewToken) (*ViewToken, error) {
+	return &ViewToken{}, nil
+}
+
+func (h *MockClientConfig) DeleteViewToken(config *humioapi.Config, req reconcile.Request, hvt *humiov1alpha1.HumioViewToken) error {
+	return nil
+}
+
 func (h *MockClientConfig) AddParser(config *humioapi.Config, req reconcile.Request, hp *humiov1alpha1.HumioParser) (*humioapi.Parser, error) {
 	h.apiClient.Parser = humioapi.Parser{
 		Name:      hp.Spec.Name,
