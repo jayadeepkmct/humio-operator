@@ -33,10 +33,15 @@ import (
 	"github.com/humio/humio-operator/pkg/helpers"
 )
 
+type ViewToken struct {
+	Name string `json:"name"`
+}
+
 // Client is the interface that can be mocked
 type Client interface {
 	ClusterClient
 	IngestTokensClient
+	ViewTokensClient
 	ParsersClient
 	RepositoriesClient
 	ViewsClient
@@ -56,6 +61,14 @@ type ClusterClient interface {
 	GetBaseURL(*humioapi.Config, reconcile.Request, *humiov1alpha1.HumioCluster) *url.URL
 	TestAPIToken(*humioapi.Config, reconcile.Request) error
 	Status(*humioapi.Config, reconcile.Request) (humioapi.StatusResponse, error)
+}
+
+// TODO: viewtoken operations are not currently supported by humiocli
+type ViewTokensClient interface {
+	AddViewToken(*humioapi.Config, reconcile.Request, *humiov1alpha1.HumioViewToken) (*ViewToken, error)
+	GetViewToken(*humioapi.Config, reconcile.Request, *humiov1alpha1.HumioViewToken) (*ViewToken, error)
+	UpdateViewToken(*humioapi.Config, reconcile.Request, *humiov1alpha1.HumioViewToken) (*ViewToken, error)
+	DeleteViewToken(*humioapi.Config, reconcile.Request, *humiov1alpha1.HumioViewToken) error
 }
 
 type IngestTokensClient interface {
@@ -282,6 +295,56 @@ func (h *ClientConfig) UpdateIngestToken(config *humioapi.Config, req reconcile.
 
 func (h *ClientConfig) DeleteIngestToken(config *humioapi.Config, req reconcile.Request, hit *humiov1alpha1.HumioIngestToken) error {
 	return h.GetHumioClient(config, req).IngestTokens().Remove(hit.Spec.RepositoryName, hit.Spec.Name)
+}
+
+func (h *ClientConfig) AddViewToken(config *humioapi.Config, req reconcile.Request, hvt *humiov1alpha1.HumioViewToken) (*ViewToken, error) {
+	return &ViewToken{}, nil
+}
+
+type ViewTokenData struct {
+	Permissions []string
+	ExpireAt    int64
+	Name        string
+	Views       []struct {
+		Name string
+	}
+}
+
+func (h *ClientConfig) GetViewToken(config *humioapi.Config, req reconcile.Request, hvt *humiov1alpha1.HumioViewToken) (*ViewToken, error) {
+	var query struct {
+		Tokens struct {
+			Results []ViewTokenData `graphql:"... on ViewPermissionToken"`
+		} `graphql:"tokens(typeFilter: [ViewPermissionToken], sortBy: Name, searchFilter: $searchFilter)"`
+	}
+
+	variables := map[string]interface{}{
+		"searchFilter": hvt.Spec.Name,
+	}
+
+	err := h.GetHumioClient(config, req).Query(&query, variables)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, tokenData := range query.Tokens.Results {
+		for _, v := range tokenData.Views {
+			if v.Name == hvt.Spec.ViewName {
+				return &ViewToken{
+					Name: tokenData.Name,
+				}, nil
+			}
+		}
+	}
+
+	return &ViewToken{}, nil
+}
+
+func (h *ClientConfig) UpdateViewToken(config *humioapi.Config, req reconcile.Request, hvt *humiov1alpha1.HumioViewToken) (*ViewToken, error) {
+	return &ViewToken{}, nil
+}
+
+func (h *ClientConfig) DeleteViewToken(config *humioapi.Config, req reconcile.Request, hvt *humiov1alpha1.HumioViewToken) error {
+	return nil
 }
 
 func (h *ClientConfig) AddParser(config *humioapi.Config, req reconcile.Request, hp *humiov1alpha1.HumioParser) (*humioapi.Parser, error) {

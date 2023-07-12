@@ -323,6 +323,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - core.humio.com
+  resources:
+  - humioviewtokens
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - core.humio.com
+  resources:
+  - humioviewtokens/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - core.humio.com
+  resources:
+  - humioviewtokens/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - networking.k8s.io
   resources:
   - ingress
